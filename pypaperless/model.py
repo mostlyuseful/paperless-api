@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, List, Optional
 
 from datetime import datetime
 
@@ -8,7 +8,7 @@ __all__ = [
     "PaperlessCorrespondent", "PaperlessDocumentType", "PaperlessTag", 
     "PaperlessSavedView", "PaperlessDocumentNote", "PaperlessDocument", 
     "PaperlessTask", "PaperlessStoragePath", "PaperlessUser", "PaperlessGroup",
-    "PaperlessMailAccount", "PaperlessMailRule",
+    "PaperlessMailAccount", "PaperlessMailRule", "PaperlessDocumentMetadata",
     "PaperlessModel",
 ]
 
@@ -26,6 +26,7 @@ ENDPOINT_MAIL_ACCOUNTS = "mail_accounts"
 ENDPOINT_MAIL_RULES = "mail_rules"
 
 ENDPOINT_SUFFIX_NOTES = "notes"
+ENDPOINT_SUFFIX_METADATA = "metadata"
 
 
 def datetime_field_factory():
@@ -176,6 +177,36 @@ class PaperlessDocument(PaperlessModel):
         self.notes = [PaperlessDocumentNote(**item) for item in self.notes]
 
 
+@dataclass(kw_only=True)
+class PaperlessFileMetadata:
+    namespace: str
+    prefix: str
+    key: str
+    value: str
+
+
+@dataclass(kw_only=True)
+class PaperlessDocumentMetadata(PaperlessModel):
+    _endpoint: str = ENDPOINT_DOCUMENTS
+    _endpoint_suffix: str = ENDPOINT_SUFFIX_METADATA
+    original_checksum: str
+    original_filename: str
+    original_size: int
+    original_mime_type: str
+    media_filename: str
+    archive_media_filename: str
+    has_archive_version: bool
+    original_metadata: List[PaperlessFileMetadata]
+    archive_checksum: Optional[str]
+    archive_size: Optional[int]
+    archive_metadata: List[PaperlessFileMetadata]
+    lang: str
+
+    def __post_init__(self):
+        self.original_metadata = [PaperlessFileMetadata(**item) for item in self.original_metadata] if self.original_metadata else []
+        self.archive_metadata = [PaperlessFileMetadata(**item) for item in self.archive_metadata] if self.archive_metadata else []
+
+    
 @dataclass(kw_only=True)
 class PaperlessTask(PaperlessModel):
     """

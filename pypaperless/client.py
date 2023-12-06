@@ -2,7 +2,8 @@
 
 """ A simple and stupid Python lib for the paperless-ngx Rest API """
 
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 from .model import *
 
@@ -235,7 +236,14 @@ class Paperless:
     
     def get_document(self, id: int) -> PaperlessDocument:
         return self.get(PaperlessDocument, id)
-    
+
+    def get_document_metadata(self, id: int) -> PaperlessDocumentMetadata:
+        """Gets document's metadata by document id.
+        :param id: document id
+        :return: PaperlessDocumentMetadata
+        """
+        return self.get(PaperlessDocumentMetadata, id)
+
     def get_storage_path(self, id: int) -> PaperlessStoragePath:
         return self.get(PaperlessStoragePath, id)
     
@@ -250,5 +258,37 @@ class Paperless:
     
 
     def get_tasks(self) -> List[PaperlessTask]:
-        response = self._http_get(f"{self.basepath}/{PaperlessTask._endpoint}/", format="json")
+        response = self._http_get(
+            f"{self.basepath}/{PaperlessTask._endpoint}/", format="json"
+        )
         return [PaperlessTask(**item) for item in response]
+
+    def get_task(self, task_id: str) -> PaperlessTask:
+        response = self._http_get(
+            f"{self.basepath}/{PaperlessTask._endpoint}/",
+            task_id=task_id,
+            format="json",
+        )
+        if len(response) == 0:
+            raise ValueError(f"Task with task_id={task_id} not found!")
+        if len(response) > 1:
+            raise ValueError(f"Multiple tasks with task_id={task_id} found!")
+        task_payload = response[0]
+        return PaperlessTask(**task_payload)
+
+    def upload_document(self, file, filename: Optional[str] = None) -> PaperlessTask:
+        if filename:
+            filename_to_send = Path(filename).name
+        elif hasattr(file, "name"):
+            filename_to_send = Path(file.name).name
+        else:
+            filename_to_send = "Unknown.dat"
+        response = self._session.post(
+            f"{self.basepath}/{PaperlessDocument._endpoint}/post_document/",
+            headers = self._auth_headers(),
+            files={"document": (filename_to_send, file)},
+            #files={"document": file},
+            #files = {"document": (filename_to_send, file.read())},
+        )
+        response.raise_for_status()
+        return self.get_task(response.json())
