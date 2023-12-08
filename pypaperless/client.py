@@ -156,7 +156,8 @@ class Paperless:
         """
         Return exactly one model by id.
         """
-        response = self._http_get(f"{self.basepath}/{cls._endpoint}/{id}/", format="json")
+        suffix = cls._endpoint_suffix+"/" if hasattr(cls, "_endpoint_suffix") else ""
+        response = self._http_get(f"{self.basepath}/{cls._endpoint}/{id}/{suffix}", format="json")
         return cls(**response)
 
     

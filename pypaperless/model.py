@@ -190,17 +190,17 @@ class PaperlessDocumentMetadata(PaperlessModel):
     _endpoint: str = ENDPOINT_DOCUMENTS
     _endpoint_suffix: str = ENDPOINT_SUFFIX_METADATA
     original_checksum: str
-    original_filename: str
     original_size: int
     original_mime_type: str
     media_filename: str
-    archive_media_filename: str
     has_archive_version: bool
     original_metadata: List[PaperlessFileMetadata]
     archive_checksum: Optional[str]
+    archive_media_filename: str
+    original_filename: str
+    lang: str
     archive_size: Optional[int]
     archive_metadata: List[PaperlessFileMetadata]
-    lang: str
 
     def __post_init__(self):
         self.original_metadata = [PaperlessFileMetadata(**item) for item in self.original_metadata] if self.original_metadata else []
